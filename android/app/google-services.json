@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "569568873949",
+    "project_id": "posxpert-d6764",
+    "storage_bucket": "posxpert-d6764.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:569568873949:android:0f196bfe57553e3e03ba34",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9_eX3cDriukD5TOBY9pboghcPLzuuykw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

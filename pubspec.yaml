@@ -1,0 +1,55 @@
+name: POSXpert
+description: A new Flutter project.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.18.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1 # Update to the latest version
+  flutter_native_splash: ^2.4.3
+  flutter_screenutil: ^5.0.0
+  
+  cupertino_icons: ^1.0.5
+  firebase_core: ^3.13.0
+  cloud_firestore: ^5.6.6
+  firebase_auth: ^5.5.2
+  firebase_storage: ^12.4.5
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+  universal_platform: ^1.0.0 
+  intl: ^0.20.2
+  pdf: ^3.11.3
+  printing: ^5.14.2
+  mobile_scanner: ^3.4.0
+  usb_serial: ^0.3.0  # For USB barcode scanner
+  flutter_keyboard_visibility: ^5.3.2  # For USB scanner input detection
+  flutter_usb: ^0.0.4
+  hid_listener: ^2.0.1
+  provider: ^6.1.4
+  syncfusion_flutter_charts: ^29.1.40
+  
+  
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/pos.png # Ensure the logo image is included
+    - assets/images/image1.png
+
+flutter_native_splash:
+  color: "#363753" # Set the background color
+  image: assets/images/pos.png # Path to your logo
+  android: true
+  ios: true
+  web: true
