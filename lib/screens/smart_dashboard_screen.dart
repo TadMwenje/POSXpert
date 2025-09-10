@@ -4,6 +4,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../widgets/custom_text_styles1.dart';
 import '../components/ai_assistant.dart';
 import '../widgets/responsive_utils.dart';
+import '../widgets/app_sidebar.dart';
 
 class SmartDashboardScreen extends StatefulWidget {
   @override
@@ -317,7 +318,7 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> {
             desktop: 240,
           ),
           color: Color(0xFF363753),
-          child: _buildSidebar(context),
+          child: AppSidebar(currentScreen: 'dashboard'),
         ),
         Expanded(
           child: SingleChildScrollView(

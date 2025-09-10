@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../models/user_data.dart';
 import '../widgets/settings_style.dart';
+import '../widgets/app_sidebar.dart';
 import 'reports_screen.dart';
 import 'smart_dashboard_screen.dart';
 import 'orders_screen.dart';
@@ -40,90 +39,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: const Color(0xFFF5F5F5),
         child: Row(
           children: [
-            _buildSidebar(context),
+            AppSidebar(currentScreen: 'settings'), // Pass 'settings' here
             Expanded(
               child: _buildMainContent(),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebar(BuildContext context) {
-    return Container(
-      width: 300,
-      color: const Color(0xFF363753),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.store, size: 60, color: Colors.grey[600]),
-            ),
-          ),
-          _buildMenuItem('⚙️ SETTINGS', const Color(0xFF5CD2C6), context),
-          _buildMenuItem('📊 DASHBOARD', Colors.white, context),
-          _buildMenuItem('📦 ORDERS', Colors.white, context),
-          _buildMenuItem('📋 INVENTORY', Colors.white, context),
-          _buildMenuItem('📈 REPORTS', Colors.white, context),
-          const Spacer(),
-          _buildMenuItem('👤 LOGOUT', Colors.white, context),
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-
-  // Replace your _buildMenuItem method with this:
-  Widget _buildMenuItem(String title, Color color, BuildContext context) {
-    final userData = Provider.of<UserData>(context, listen: false);
-    final String screenName = title.toLowerCase().replaceAll(' ', '_');
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-      child: GestureDetector(
-        onTap: () {
-          if (!userData.hasAccessTo(screenName)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content:
-                      Text('You do not have permission to access this screen')),
-            );
-            return;
-          }
-
-          if (title.contains('DASHBOARD')) {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => SmartDashboardScreen()));
-          } else if (title.contains('ORDERS')) {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => OrdersScreen()));
-          } else if (title.contains('INVENTORY')) {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => InventoryScreen()));
-          } else if (title.contains('REPORTS')) {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => ReportsScreen()));
-          } else if (title.contains('SETTINGS') && userData.isAdmin) {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()));
-          }
-        },
-        child: Text(
-          title,
-          style: SettingsStyles.menuTextStyle.copyWith(
-            color: userData.hasAccessTo(screenName) ? color : Colors.grey,
-          ),
         ),
       ),
     );

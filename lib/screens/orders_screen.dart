@@ -30,7 +30,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         decoration: BoxDecoration(color: Color(0xFFD9D9D9)),
         child: Row(
           children: [
-            AppSidebar(currentScreen: 'orders'),
+            AppSidebar(currentScreen: 'orders'), // Pass 'orders' here
             Expanded(
               child: Container(
                 margin: EdgeInsets.all(10),

@@ -5,7 +5,9 @@ import 'inventory_edit.dart';
 import 'inventory_product_screen.dart';
 import '../widgets/custom_text_styles1.dart';
 import '../widgets/responsive_utils.dart';
+import '../widgets/app_sidebar.dart';
 import 'barcode_scanner_screen.dart';
+import 'inventory_upload_screen.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({Key? key}) : super(key: key);
@@ -278,10 +280,31 @@ class _InventoryScreenState extends State<InventoryScreen> {
               backgroundColor: Colors.white,
               elevation: 1,
               actions: [
-                IconButton(
-                  icon: Icon(Icons.qr_code_scanner, color: Color(0xFF363753)),
-                  onPressed: _startBarcodeScan,
-                  tooltip: 'Scan Barcode',
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon:
+                          Icon(Icons.qr_code_scanner, color: Color(0xFF363753)),
+                      onPressed: _startBarcodeScan,
+                      tooltip: 'Scan Barcode',
+                      padding: EdgeInsets.all(8),
+                    ),
+                    SizedBox(width: 4),
+                    IconButton(
+                      icon: Icon(Icons.upload_file, color: Color(0xFF363753)),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => InventoryUploadScreen(),
+                          ),
+                        ).then((_) => _loadInventory());
+                      },
+                      tooltip: 'Bulk Upload',
+                      padding: EdgeInsets.all(8),
+                    ),
+                  ],
                 ),
               ],
             )
@@ -335,7 +358,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             desktop: 240,
           ),
           color: Color(0xFF363753),
-          child: _buildSidebar(context),
+          child: AppSidebar(currentScreen: 'inventory'),
         ),
         Expanded(
           child: SingleChildScrollView(
@@ -357,11 +380,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       'Inventory Management',
                       style: CustomTextStyles1.sectionHeader(context),
                     ),
-                    IconButton(
-                      icon:
-                          Icon(Icons.qr_code_scanner, color: Color(0xFF363753)),
-                      onPressed: _startBarcodeScan,
-                      tooltip: 'Scan Barcode',
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.qr_code_scanner,
+                              color: Color(0xFF363753)),
+                          onPressed: _startBarcodeScan,
+                          tooltip: 'Scan Barcode',
+                          padding: EdgeInsets.all(8),
+                        ),
+                        SizedBox(width: 4),
+                        IconButton(
+                          icon:
+                              Icon(Icons.upload_file, color: Color(0xFF363753)),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => InventoryUploadScreen(),
+                              ),
+                            ).then((_) => _loadInventory());
+                          },
+                          tooltip: 'Bulk Upload',
+                          padding: EdgeInsets.all(8),
+                        ),
+                      ],
                     ),
                   ],
                 ),

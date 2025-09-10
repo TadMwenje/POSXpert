@@ -32,9 +32,14 @@ dependencies:
   flutter_usb: ^0.0.4
   hid_listener: ^2.0.1
   provider: ^6.1.4
-  syncfusion_flutter_charts: ^29.1.40
-  
-  
+  syncfusion_flutter_charts: ^30.2.6+1
+  syncfusion_flutter_datagrid: ^30.2.6+1
+  syncfusion_flutter_xlsio: ^30.2.6+1
+  file_saver: ^0.1.1
+  web: ^1.0.0
+  universal_html: ^2.2.4
+  csv: ^5.0.3
+  file_picker: ^9.0.4
   
 dev_dependencies:
   flutter_test:

@@ -1,127 +1,133 @@
-// widgets/app_sidebar.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../screens/smart_dashboard_screen.dart';
-import '../screens/inventory_screen.dart';
-import '../screens/orders_screen.dart';
-import '../screens/reports_screen.dart';
-import '../screens/settings_screen.dart';
-import '../screens/login_screen.dart';
-import 'inventory_style.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AppSidebar extends StatelessWidget {
+class AppSidebar extends StatefulWidget {
   final String currentScreen;
 
   const AppSidebar({Key? key, required this.currentScreen}) : super(key: key);
 
   @override
+  _AppSidebarState createState() => _AppSidebarState();
+}
+
+class _AppSidebarState extends State<AppSidebar> {
+  String? _userRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserRole();
+  }
+
+  Future<void> _getUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('Employee')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            _userRole = userDoc.data()?['role']?.toString().toLowerCase();
+          });
+        }
+      } catch (e) {
+        print('Error getting user role: $e');
+      }
+    }
+  }
+
+  bool _canAccess(String screen) {
+    if (_userRole == 'admin') return true;
+
+    switch (screen) {
+      case 'dashboard':
+        return _userRole == 'inventory' || _userRole == 'cashier';
+      case 'orders':
+        return _userRole == 'cashier';
+      case 'inventory':
+        return _userRole == 'inventory';
+      case 'reports':
+        return _userRole == 'inventory' || _userRole == 'admin';
+      case 'settings':
+      case 'users':
+        return _userRole == 'admin';
+      default:
+        return false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      width: 200,
-      color: const Color(0xFF363753),
+      width: 240,
+      color: Color(0xFF363753),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 40),
-          _buildMenuItem(
-            context,
-            '🏠 Dashboard',
-            'dashboard',
-            SmartDashboardScreen(),
+          SizedBox(height: 40),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'POSXpert',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-          _buildMenuItem(
-            context,
-            '📄 Orders',
-            'orders',
-            OrdersScreen(),
+          SizedBox(height: 30),
+          Expanded(
+            child: ListView(
+              children: [
+                if (_canAccess('dashboard'))
+                  _buildNavItem('📊 Dashboard', '/dashboard',
+                      widget.currentScreen == 'dashboard'),
+                if (_canAccess('orders'))
+                  _buildNavItem(
+                      '📦 Orders', '/orders', widget.currentScreen == 'orders'),
+                if (_canAccess('inventory'))
+                  _buildNavItem('📋 Inventory', '/inventory',
+                      widget.currentScreen == 'inventory'),
+                if (_canAccess('reports'))
+                  _buildNavItem('📈 Reports', '/reports',
+                      widget.currentScreen == 'reports'),
+                if (_canAccess('settings'))
+                  _buildNavItem('⚙️ Settings', '/settings',
+                      widget.currentScreen == 'settings'),
+                if (_canAccess('users'))
+                  _buildNavItem(
+                      '👥 Users', '/useradd', widget.currentScreen == 'users'),
+              ],
+            ),
           ),
-          _buildMenuItem(
-            context,
-            '📦 Inventory',
-            'inventory',
-            const InventoryScreen(),
-          ),
-          _buildMenuItem(
-            context,
-            '📊 Reports',
-            'reports',
-            ReportsScreen(),
-          ),
-          _buildMenuItem(
-            context,
-            '⚙️ Settings',
-            'settings',
-            SettingsScreen(),
-          ),
-          const Spacer(),
-          _buildLogoutButton(context),
-          const SizedBox(height: 20),
+          Divider(color: Colors.white.withOpacity(0.2)),
+          _buildNavItem('👤 Logout', '/logout', false),
+          SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildMenuItem(
-    BuildContext context,
-    String title,
-    String screenName,
-    Widget screen,
-  ) {
-    final isActive = currentScreen == screenName;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: InkWell(
-        onTap: () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => screen),
-          );
-        },
-        child: Text(
-          title,
-          style: InventoryStyles.menuTextStyle.copyWith(
-            color: isActive ? const Color(0xFF5CD2C6) : Colors.white,
-          ),
+  Widget _buildNavItem(String title, String route, bool isActive) {
+    return ListTile(
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isActive ? Color(0xFF5CD2C6) : Colors.white.withOpacity(0.8),
+          fontSize: 16,
         ),
       ),
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: InkWell(
-        onTap: () async {
-          final shouldLogout = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Confirm Logout'),
-              content: const Text('Are you sure you want to logout?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Logout'),
-                ),
-              ],
-            ),
-          );
-
-          if (shouldLogout == true) {
-            await FirebaseAuth.instance.signOut();
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => LoginScreen()),
-            );
-          }
-        },
-        child: Text(
-          'LOGOUT',
-          style: InventoryStyles.menuTextStyle.copyWith(color: Colors.white),
-        ),
-      ),
+      onTap: () {
+        if (!isActive) {
+          Navigator.pushNamed(context, route);
+        }
+      },
     );
   }
 }

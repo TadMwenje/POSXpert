@@ -23,12 +23,12 @@ class UserData with ChangeNotifier {
     required this.isActive,
     required this.createdAt,
   });
-
   factory UserData.placeholder() {
     return UserData(
       uid: '',
       email: '',
       firstName: '',
+      lastName: '',
       phone: '',
       role: 'cashier',
       username: '',

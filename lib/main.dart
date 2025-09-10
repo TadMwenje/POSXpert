@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'widgets/splash_screen.dart';
+import 'widgets/auth_wrapper.dart';
 import 'screens/login_screen.dart';
 import 'screens/smart_dashboard_screen.dart';
 import 'screens/orders_screen.dart';
@@ -17,10 +18,12 @@ import 'screens/inventory_product_screen.dart';
 import 'screens/logout_screen.dart';
 import 'screens/barcode_scanner_screen.dart';
 import 'screens/useradd_screen.dart';
+import 'screens/payment_screen.dart';
+import 'screens/receipt_screen_pdf.dart';
+import 'screens/email_verification_screen.dart';
+import 'screens/inventory_upload_screen.dart';
 import 'models/user_data.dart';
 import 'services/auth_manager.dart';
-import 'widgets/auth_wrapper.dart';
-import 'screens/email_verification_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,11 +38,11 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Keep your existing UserData provider
+        // UserData provider
         Provider<UserData>(
           create: (_) => UserData.placeholder(),
         ),
-        // Add the AuthManager which handles authentication and updates UserData
+        // AuthManager provider
         ChangeNotifierProvider<AuthManager>(
           create: (_) => AuthManager(),
         ),
@@ -71,60 +74,143 @@ class MyApp extends StatelessWidget {
         // Protected routes (wrapped with AuthWrapper)
         '/dashboard': (context) => AuthWrapper(
               child: SmartDashboardScreen(),
-              key: const ValueKey('dashboard'),
             ),
         '/orders': (context) => AuthWrapper(
               child: OrdersScreen(),
-              key: const ValueKey('orders'),
+            ),
+        '/payment': (context) => AuthWrapper(
+              child: PaymentScreen(
+                totalAmount:
+                    ModalRoute.of(context)!.settings.arguments as double,
+                items: [],
+                orderId: '',
+              ),
+            ),
+        '/receipt': (context) => AuthWrapper(
+              child: ReceiptPdfScreen(
+                paymentId: ModalRoute.of(context)!.settings.arguments as String,
+              ),
             ),
         '/settings': (context) => AuthWrapper(
               child: SettingsScreen(),
-              key: const ValueKey('settings'),
             ),
         '/useradd': (context) => AuthWrapper(
               child: UserAddScreen(),
-              key: const ValueKey('useradd'),
             ),
         '/verify-email': (context) => EmailVerificationScreen(),
         '/reports': (context) => AuthWrapper(
               child: ReportsScreen(),
-              key: const ValueKey('reports'),
             ),
         '/inventory': (context) => AuthWrapper(
               child: const InventoryScreen(),
-              key: const ValueKey('inventory'),
             ),
         '/inventory_view': (context) => AuthWrapper(
               child: InventoryViewScreen(
                 productData: ModalRoute.of(context)!.settings.arguments
                     as Map<String, dynamic>,
               ),
-              key: const ValueKey('inventory_view'),
             ),
         '/inventory_edit': (context) => AuthWrapper(
               child: InventoryEditScreen(
                 productData: ModalRoute.of(context)!.settings.arguments
                     as Map<String, dynamic>,
               ),
-              key: const ValueKey('inventory_edit'),
             ),
         '/inventory_product': (context) => AuthWrapper(
               child: const InventoryProductScreen(),
-              key: const ValueKey('inventory_product'),
             ),
         '/logout': (context) => AuthWrapper(
               child: const LogoutScreen(),
-              key: const ValueKey('logout'),
+            ),
+        '/inventory_upload': (context) => AuthWrapper(
+              child: const InventoryUploadScreen(),
             ),
         '/barcode_scanner': (context) => AuthWrapper(
               child: BarcodeScannerScreen(
-                onScan: (barcode) {}, // Will be overridden when navigated to
+                onScan: (barcode) {},
                 showCamera: ModalRoute.of(context)!.settings.arguments as bool,
               ),
-              key: const ValueKey('barcode_scanner'),
             ),
       },
       debugShowCheckedModeBanner: false,
+      // Add navigator observer for role-based routing
+      navigatorObservers: [RoleAwareNavigatorObserver()],
     );
+  }
+}
+
+// Navigator observer for role-based access control
+class RoleAwareNavigatorObserver extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    _checkRouteAccess(route);
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    if (newRoute != null) {
+      _checkRouteAccess(newRoute);
+    }
+  }
+
+  void _checkRouteAccess(Route route) async {
+    final context = navigator?.context;
+    if (context == null) return;
+
+    final authManager = Provider.of<AuthManager>(context, listen: false);
+
+    if (!authManager.isAuthenticated) return;
+
+    final routeName = route.settings.name;
+    final userRole = authManager.userRole;
+
+    // Define accessible routes for each role
+    final accessibleRoutes = {
+      'admin': [
+        '/dashboard',
+        '/orders',
+        '/inventory',
+        '/reports',
+        '/settings',
+        '/useradd',
+        '/inventory_view',
+        '/inventory_edit',
+        '/inventory_product',
+        '/inventory_upload',
+        '/barcode_scanner',
+        '/payment',
+        '/receipt'
+      ],
+      'inventory': [
+        '/dashboard',
+        '/inventory',
+        '/reports',
+        '/inventory_view',
+        '/inventory_edit',
+        '/inventory_product',
+        '/inventory_upload',
+        '/barcode_scanner'
+      ],
+      'cashier': ['/dashboard', '/orders', '/payment', '/receipt'],
+    };
+
+    if (routeName != null &&
+        !(accessibleRoutes[userRole]?.contains(routeName) ?? false)) {
+      // Redirect to appropriate screen
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        String redirectRoute = '/dashboard';
+        if (userRole == 'cashier') redirectRoute = '/orders';
+        if (userRole == 'inventory') redirectRoute = '/inventory';
+
+        Navigator.of(context).pushReplacementNamed(redirectRoute);
+      });
+    }
+  }
+}
+
+// Helper extension for route checking
+extension RouteExtension on Widget {
+  String get routeName {
+    return runtimeType.toString();
   }
 }

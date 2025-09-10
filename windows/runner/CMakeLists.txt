@@ -1,11 +1,20 @@
 cmake_minimum_required(VERSION 3.14)
-project(runner LANGUAGES CXX)
+project(POSXpert LANGUAGES CXX)
 
-# Define the application target. To change its name, change BINARY_NAME in the
-# top-level CMakeLists.txt, not the value here, or `flutter run` will no longer
-# work.
-#
-# Any new source files that you add to the application should be added here.
+# Use Flutter's expected target name
+set(BINARY_NAME "flutter_application_1")
+
+# Set the Flutter SDK path
+set(FLUTTER_ROOT "C:/path/to/flutter")  # Update to your actual path
+
+# Disable unsafe function warnings for Firebase
+add_compile_options(
+    "$<$<C_COMPILER_ID:MSVC>:/wd4996>"
+    "$<$<CXX_COMPILER_ID:MSVC>:/wd4996>"
+    "$<$<C_COMPILER_ID:MSVC>:/D_CRT_SECURE_NO_WARNINGS>"
+    "$<$<CXX_COMPILER_ID:MSVC>:/D_CRT_SECURE_NO_WARNINGS>"
+)
+
 add_executable(${BINARY_NAME} WIN32
   "flutter_window.cpp"
   "main.cpp"
@@ -16,25 +25,41 @@ add_executable(${BINARY_NAME} WIN32
   "runner.exe.manifest"
 )
 
-# Apply the standard set of build settings. This can be removed for applications
-# that need different build settings.
+# Set output name to POSXpert.exe
+set_target_properties(${BINARY_NAME} PROPERTIES OUTPUT_NAME "POSXpert")
+
 apply_standard_settings(${BINARY_NAME})
 
-# Add preprocessor definitions for the build version.
+# Version definitions
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION=\"${FLUTTER_VERSION}\"")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_MAJOR=${FLUTTER_VERSION_MAJOR}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_MINOR=${FLUTTER_VERSION_MINOR}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_PATCH=${FLUTTER_VERSION_PATCH}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_BUILD=${FLUTTER_VERSION_BUILD}")
 
-# Disable Windows macros that collide with C++ standard library functions.
+# Disable problematic Windows macros
 target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 
-# Add dependency libraries and include directories. Add any application-specific
-# dependencies here.
-target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
-target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
+# Link required libraries
+target_link_libraries(${BINARY_NAME} PRIVATE 
+    flutter 
+    flutter_wrapper_app
+    dwmapi.lib
+    winmm.lib
+    icuuc.lib
+    icuin.lib
+    version.lib
+    shlwapi.lib
+    firebase_app
+    firebase_auth
+    firebase_storage
+    cloud_firestore
+)
+
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
-# Run the Flutter tool portions of the build. This must not be removed.
+# Flutter build dependency
 add_dependencies(${BINARY_NAME} flutter_assemble)
+
+# Include generated plugins (CRITICAL FIX)
+include(flutter/generated_plugins.cmake)

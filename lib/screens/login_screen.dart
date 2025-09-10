@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import '../widgets/auth_wrapper.dart';
 import '../widgets/custom_text_styles.dart';
-import '../services/firebase_auth_service.dart';
+import '../services/auth_manager.dart';
 import 'forgotpassword_screen.dart';
 import 'signup_screen.dart';
 import 'smart_dashboard_screen.dart';
+import 'orders_screen.dart';
+import 'inventory_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -20,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
-  final FirebaseAuthService _authService = FirebaseAuthService();
 
   @override
   void dispose() {
@@ -199,77 +199,49 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      if (mounted) {
+        setState(() => _isLoading = true);
+      }
+
+      final authManager = Provider.of<AuthManager>(context, listen: false);
+
       try {
-        // Sign in with provided credentials
-        UserCredential userCredential =
-            await _authService.signInWithEmailAndPassword(
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
-        );
+        final success = await authManager.signIn(_emailController.text.trim(),
+            _passwordController.text.trim(), context);
 
-        if (userCredential.user != null) {
-          // Check if email is verified (optional feature, you can remove if not needed)
-          if (!userCredential.user!.emailVerified) {
-            // Send verification email if not verified
-            await _authService.sendEmailVerification();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Please verify your email. A verification link has been sent.',
-                ),
-                duration: Duration(seconds: 5),
-              ),
-            );
-            setState(() => _isLoading = false);
-            return;
+        if (success && mounted) {
+          // Navigate to appropriate screen based on role
+          final userRole = authManager.userRole;
+          Widget targetScreen = SmartDashboardScreen();
+
+          if (userRole == 'cashier') {
+            targetScreen = OrdersScreen();
+          } else if (userRole == 'inventory') {
+            targetScreen = InventoryScreen();
           }
 
-          // Check if user document exists
-          DocumentSnapshot userDoc = await FirebaseFirestore.instance
-              .collection('Employee')
-              .doc(userCredential.user!.uid)
-              .get();
-
-          if (!userDoc.exists) {
-            // Handle case where auth user exists but no Firestore document
-            await FirebaseAuth.instance.signOut();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      'User account incomplete. Please contact administrator.')),
-            );
-            setState(() => _isLoading = false);
-            return;
-          }
-
-          // Navigate to dashboard using AuthWrapper
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => AuthWrapper(child: SmartDashboardScreen()),
+              builder: (context) => AuthWrapper(child: targetScreen),
             ),
           );
+        } else if (mounted && authManager.error != null) {
+          // Show error message from AuthManager
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(authManager.error!)),
+          );
         }
-      } on FirebaseAuthException catch (e) {
-        String errorMessage = 'Login failed. Please try again.';
-        if (e.code == 'user-not-found') {
-          errorMessage = 'No user found with this email.';
-        } else if (e.code == 'wrong-password') {
-          errorMessage = 'Incorrect password. Please try again.';
-        } else if (e.code == 'user-disabled') {
-          errorMessage = 'This account has been disabled.';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('An unexpected error occurred: ${e.toString()}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: ${e.toString()}')),
+          );
+        }
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
